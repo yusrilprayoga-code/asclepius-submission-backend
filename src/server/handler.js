@@ -39,17 +39,22 @@ const getHistoriesHandler = async (request, h) => {
 
   try {
     const snapshot = await predictCollection.get();
-    const histories = [];
-
-    snapshot.forEach((doc) => {
-      histories.push(doc.data());
+    const histories = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        history: {
+          result: data.result,
+          createdAt: data.createdAt,
+          suggestion: data.suggestion,
+          id: data.id 
+        }
+      };
     });
 
     const response = h.response({
       status: 'success',
-      data: {
-        histories
-      }
+      data: histories 
     });
     response.code(200);
     return response;
@@ -63,7 +68,4 @@ const getHistoriesHandler = async (request, h) => {
   }
 };
 
-module.exports = {
-  postPredictHandler,
-  getHistoriesHandler
-};
+module.exports = { postPredictHandler, getHistoriesHandler };
