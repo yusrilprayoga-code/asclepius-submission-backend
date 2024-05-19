@@ -1,7 +1,9 @@
+const { Firestore } = require('@google-cloud/firestore');
+
 const predictClassification = require('../services/inferenceService');
 const crypto = require('crypto');
 
-// const storeData = require('../services/storeData');
+const storeData = require('../services/storeData');
  
 async function postPredictHandler(request, h) {
   const { image } = request.payload;
@@ -20,7 +22,7 @@ async function postPredictHandler(request, h) {
     "createdAt": createdAt
   }
 
-    // await storeData(id, data);
+    await storeData(id, data);
 
   const response = h.response({
     status: 'success',
@@ -31,4 +33,37 @@ async function postPredictHandler(request, h) {
     return response;
 }
 
-module.exports = postPredictHandler;
+const getHistoriesHandler = async (request, h) => {
+  const db = new Firestore();
+  const predictCollection = db.collection('prediction');
+
+  try {
+    const snapshot = await predictCollection.get();
+    const histories = [];
+
+    snapshot.forEach((doc) => {
+      histories.push(doc.data());
+    });
+
+    const response = h.response({
+      status: 'success',
+      data: {
+        histories
+      }
+    });
+    response.code(200);
+    return response;
+  } catch (error) {
+    const response = h.response({
+      status: 'error',
+      message: error.message
+    });
+    response.code(500);
+    return response;
+  }
+};
+
+module.exports = {
+  postPredictHandler,
+  getHistoriesHandler
+};
